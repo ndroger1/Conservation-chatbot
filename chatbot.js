@@ -45,28 +45,71 @@ class ChangemakerChatbot {
         const sendBtn = document.getElementById('sendBtn');
         const userInput = document.getElementById('userInput');
 
-        sendBtn.addEventListener('click', () => this.handleUserMessage());
+        if (!sendBtn || !userInput) {
+            console.error('Send button or input not found');
+            return;
+        }
+
+        // Use arrow functions to preserve 'this' context
+        sendBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.handleUserMessage();
+        }, false);
+
         userInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.handleUserMessage();
-        });
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.handleUserMessage();
+            }
+        }, false);
+
+        // Also handle keydown as backup
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.handleUserMessage();
+            }
+        }, false);
     }
 
     handleUserMessage() {
         const input = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
         const message = input.value.trim();
 
-        if (!message) return;
+        if (!message) {
+            console.log('Empty message, not sending');
+            return;
+        }
+
+        console.log('Sending message:', message);
+
+        // Disable button to prevent double-sends
+        if (sendBtn) {
+            sendBtn.disabled = true;
+        }
 
         this.sendUserMessage(message);
         input.value = '';
 
         // Show typing indicator
-        document.getElementById('typingIndicator').classList.add('active');
+        const typingIndicator = document.getElementById('typingIndicator');
+        if (typingIndicator) {
+            typingIndicator.classList.add('active');
+        }
 
         // Simulate AI response delay
         setTimeout(() => {
-            document.getElementById('typingIndicator').classList.remove('active');
+            if (typingIndicator) {
+                typingIndicator.classList.remove('active');
+            }
             this.processUserInput(message);
+
+            // Re-enable button
+            if (sendBtn) {
+                sendBtn.disabled = false;
+            }
         }, 1500);
     }
 
