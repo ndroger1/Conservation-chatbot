@@ -137,19 +137,95 @@ class ChangemakerChatbot {
         this.saveProgress();
     }
 
-    processUserInput(message) {
+    async processUserInput(message) {
         const lowerMessage = message.toLowerCase();
 
-        // Extract student data based on checkpoint
-        if (this.currentCheckpoint === 1) {
-            this.handleCheckpoint1(message, lowerMessage);
-        } else if (this.currentCheckpoint === 2) {
-            this.handleCheckpoint2(message, lowerMessage);
-        } else if (this.currentCheckpoint === 3) {
-            this.handleCheckpoint3(message, lowerMessage);
-        } else if (this.currentCheckpoint === 4) {
-            this.handleCheckpoint4(message, lowerMessage);
+        // Check if this is a structured checkpoint question or open-ended
+        const isStructuredQuestion = this.isStructuredCheckpointQuestion(message, lowerMessage);
+
+        if (isStructuredQuestion) {
+            // Use rule-based responses for structured checkpoint progress
+            if (this.currentCheckpoint === 1) {
+                this.handleCheckpoint1(message, lowerMessage);
+            } else if (this.currentCheckpoint === 2) {
+                this.handleCheckpoint2(message, lowerMessage);
+            } else if (this.currentCheckpoint === 3) {
+                this.handleCheckpoint3(message, lowerMessage);
+            } else if (this.currentCheckpoint === 4) {
+                this.handleCheckpoint4(message, lowerMessage);
+            }
+        } else {
+            // Use AI for open-ended questions and brainstorming
+            await this.handleWithAI(message, lowerMessage);
         }
+    }
+
+    isStructuredCheckpointQuestion(message, lowerMessage) {
+        // Detect if this is a structured checkpoint response vs open-ended question
+
+        // First message asking for name
+        if (!this.studentData.name && this.conversationHistory.length < 4) {
+            return true;
+        }
+
+        // Checkpoint 1: Direct answers about passion/issue
+        if (this.currentCheckpoint === 1 && (!this.studentData.passion || !this.studentData.issue)) {
+            return true;
+        }
+
+        // Checkpoint 2: Future Me vision statement
+        if (this.currentCheckpoint === 2 && !this.studentData.futureVision) {
+            return true;
+        }
+
+        // Checkpoint 3: Action plan building
+        if (this.currentCheckpoint === 3 && this.studentData.actionPlan.length < 200) {
+            return true;
+        }
+
+        // Otherwise, it's likely an open-ended question - use AI
+        return false;
+    }
+
+    async handleWithAI(message, lowerMessage) {
+        // Check if AI service is available
+        if (!window.aiService) {
+            console.error('AI Service not loaded');
+            this.sendBotMessage(this.getFallbackResponse(message, lowerMessage));
+            return;
+        }
+
+        // Show that we're using AI
+        console.log('Using AI for response');
+
+        try {
+            // Get AI response
+            const aiResponse = await window.aiService.generateResponse(
+                message,
+                this.conversationHistory,
+                this.currentCheckpoint
+            );
+
+            this.sendBotMessage(aiResponse);
+
+            // Update quick actions based on context
+            this.showQuickActions();
+
+        } catch (error) {
+            console.error('Error getting AI response:', error);
+            // Fall back to rule-based response
+            this.sendBotMessage(this.getFallbackResponse(message, lowerMessage));
+        }
+    }
+
+    getFallbackResponse(message, lowerMessage) {
+        // Use AI service's fallback if available
+        if (window.aiService) {
+            return window.aiService.getFallbackResponse(message, this.currentCheckpoint);
+        }
+
+        // Ultimate fallback
+        return 'I\'m here to help with your changemaker plan! What would you like to work on?';
     }
 
     handleCheckpoint1(message, lowerMessage) {
@@ -392,9 +468,70 @@ class ChangemakerChatbot {
         div.textContent = text;
         return div.innerHTML;
     }
+
+    // AI Setup Methods
+    openAISetup() {
+        const modal = document.getElementById('aiSetupModal');
+        const input = document.getElementById('aiKeyInput');
+
+        if (window.aiService && window.aiService.hasApiKey()) {
+            input.value = '••••••••••••••••'; // Show masked key
+        }
+
+        modal.classList.add('active');
+    }
+
+    closeAISetup() {
+        const modal = document.getElementById('aiSetupModal');
+        modal.classList.remove('active');
+    }
+
+    saveAIKey() {
+        const input = document.getElementById('aiKeyInput');
+        const key = input.value.trim();
+
+        if (!key || key === '••••••••••••••••') {
+            alert('Please enter a valid API key');
+            return;
+        }
+
+        if (!key.startsWith('hf_')) {
+            alert('Hugging Face API keys should start with "hf_". Please check your key.');
+            return;
+        }
+
+        // Save the key
+        if (window.aiService) {
+            window.aiService.saveApiKey(key);
+            this.updateAIStatus();
+            this.sendBotMessage('✅ AI has been enabled! I can now provide more personalized guidance and answer your questions. Try asking me anything about conservation!');
+        }
+
+        this.closeAISetup();
+    }
+
+    updateAIStatus() {
+        const statusIndicator = document.getElementById('aiStatus');
+        if (window.aiService && window.aiService.hasApiKey()) {
+            statusIndicator.className = 'ai-status active';
+        } else {
+            statusIndicator.className = 'ai-status inactive';
+        }
+    }
 }
 
 // Initialize chatbot when page loads
 document.addEventListener('DOMContentLoaded', () => {
-    new ChangemakerChatbot();
+    const chatbot = new ChangemakerChatbot();
+    window.chatbot = chatbot; // Make accessible for AI setup
+
+    // Update AI status on load
+    chatbot.updateAIStatus();
+
+    // Check if AI should prompt for setup
+    setTimeout(() => {
+        if (!window.aiService || !window.aiService.hasApiKey()) {
+            chatbot.sendBotMessage('💡 <strong>Tip:</strong> Click "Setup AI" in the top right to enable AI-powered conversations with a free Hugging Face account! (Optional but recommended)');
+        }
+    }, 3000);
 });

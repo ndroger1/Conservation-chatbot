@@ -247,10 +247,135 @@
             background: #3498db;
             color: white;
         }
+
+        .ai-setup-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .ai-setup-modal.active {
+            display: flex;
+        }
+
+        .ai-setup-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .ai-setup-content h2 {
+            color: #27ae60;
+            margin-bottom: 15px;
+        }
+
+        .ai-setup-content input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .ai-setup-content button {
+            margin: 10px 5px 0 0;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .ai-setup-save {
+            background: #27ae60;
+            color: white;
+        }
+
+        .ai-setup-cancel {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .ai-setup-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 10;
+        }
+
+        .ai-setup-btn:hover {
+            background: #2980b9;
+        }
+
+        .ai-status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .ai-status.active {
+            background: #27ae60;
+        }
+
+        .ai-status.inactive {
+            background: #e74c3c;
+        }
     </style>
 </head>
 <body>
+    <div class="ai-setup-modal" id="aiSetupModal">
+        <div class="ai-setup-content">
+            <h2>🤖 AI Setup</h2>
+            <p style="margin-bottom: 15px; color: #666;">Enable AI-powered conversations with a free Hugging Face API key.</p>
+
+            <strong>Quick Setup:</strong>
+            <ol style="margin: 10px 0; padding-left: 20px; color: #666; font-size: 14px;">
+                <li>Visit <a href="https://huggingface.co/join" target="_blank">huggingface.co/join</a></li>
+                <li>Create a free account</li>
+                <li>Go to Settings → Access Tokens</li>
+                <li>Create a new token (read access)</li>
+                <li>Paste it below</li>
+            </ol>
+
+            <input type="password" id="aiKeyInput" placeholder="Paste your Hugging Face API key here..." />
+
+            <div style="margin-top: 10px; font-size: 12px; color: #7f8c8d;">
+                🔒 Your key is stored locally in your browser and never sent anywhere except Hugging Face.
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button class="ai-setup-save" onclick="window.chatbot.saveAIKey()">Save Key</button>
+                <button class="ai-setup-cancel" onclick="window.chatbot.closeAISetup()">Cancel</button>
+            </div>
+        </div>
+    </div>
     <div class="chat-container">
+        <button class="ai-setup-btn" onclick="window.chatbot.openAISetup()">
+            <span class="ai-status inactive" id="aiStatus"></span>
+            Setup AI
+        </button>
         <div class="chat-header">
             <h1>🌱 Changemaker Plan Assistant</h1>
             <p>Your guide to creating positive conservation impact</p>
@@ -291,6 +416,7 @@
         </div>
     </div>
 
+    <script src="ai-config.js"></script>
     <script src="chatbot.js"></script>
 </body>
 </html>
