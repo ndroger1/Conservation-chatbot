@@ -324,7 +324,7 @@ class ChangemakerChatbot {
 
     getCheckpointDescription(num) {
         const descriptions = {
-            1: 'In this checkpoint, you'll identify what conservation issue you\'re passionate about and define the specific problem you want to address.',
+            1: 'In this checkpoint, you\'ll identify what conservation issue you\'re passionate about and define the specific problem you want to address.',
             2: 'Now we\'ll do research and create your "Future Me" vision - imagining the positive impact you\'ll have made.',
             3: 'Time to create your action plan! We\'ll break down the steps you\'ll take to make your vision a reality.',
             4: 'The final checkpoint! Let\'s prepare your video content and bring your changemaker plan together.'
